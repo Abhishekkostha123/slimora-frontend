@@ -52,9 +52,9 @@ export default async function BlogPage({ searchParams }: PageProps) {
       {/* ── HEADER BANNER ── */}
       <div className="bg-[#eae5db] rounded-2xl p-6 sm:p-10 border border-[#d5cfc0] text-center max-w-5xl mx-auto space-y-3">
         <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 font-serif leading-tight">
-          {q ? `Search Results for &ldquo;${q}&rdquo;` : "The Slimora Journal"}
+          {q ? `Search Results for \u201c${q}\u201d` : "The Slimora Journal"}
         </h1>
-        <p className="text-sm sm:text-base text-gray-650 max-w-2xl mx-auto leading-relaxed">
+        <p className="text-sm sm:text-base text-gray-600 max-w-2xl mx-auto leading-relaxed">
           {q
             ? `Found ${total} articles matching your search query. Explore manifestation guides and tools.`
             : "Explore our archive of articles covering the 369 manifestation method, Law of Attraction guides, chakra balancing rituals, and spiritual awakening."}
@@ -75,7 +75,7 @@ export default async function BlogPage({ searchParams }: PageProps) {
             className={`px-3.5 py-1.5 rounded-full text-xs font-bold tracking-wide uppercase transition-all ${
               !activeCategory
                 ? "bg-sage text-white shadow-xs"
-                : "text-gray-650 hover:bg-bg-custom hover:text-sage"
+                : "text-gray-600 hover:bg-bg-custom hover:text-sage"
             }`}
           >
             All Articles
@@ -87,7 +87,7 @@ export default async function BlogPage({ searchParams }: PageProps) {
               className={`px-3.5 py-1.5 rounded-full text-xs font-bold tracking-wide uppercase transition-all ${
                 activeCategory === cat.slug
                   ? "bg-sage text-white shadow-xs"
-                  : "text-gray-650 hover:bg-bg-custom hover:text-sage"
+                  : "text-gray-600 hover:bg-bg-custom hover:text-sage"
               }`}
             >
               {cat.name}

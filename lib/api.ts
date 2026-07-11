@@ -71,6 +71,20 @@ export interface PaginatedPosts {
 }
 
 /**
+ * Converts a slug like "manifestation-techniques" into a display-friendly
+ * title like "Manifestation Techniques".
+ */
+function slugToTitle(slug: string): string {
+  return slug
+    .replace(/[-_]+/g, " ")
+    .trim()
+    .split(" ")
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+}
+
+/**
  * Safely normalizes an unknown value (string or partial object) into a Category.
  * Avoids unsafe `as Category` casts that fail TS structural checks.
  */
@@ -92,7 +106,7 @@ function normalizeCategory(cat: unknown): Category {
 
   const str = String(cat ?? "");
   return {
-    name: str.charAt(0).toUpperCase() + str.slice(1),
+    name: slugToTitle(str) || "Uncategorized",
     slug: str.toLowerCase().replace(/[^a-z0-9]/g, "-"),
   };
 }
@@ -164,7 +178,7 @@ export function normalizePost(rawPost: Record<string, unknown>): Post {
     } else {
       const catString = String(rawPost.category);
       category = {
-        name: catString.charAt(0).toUpperCase() + catString.slice(1),
+        name: slugToTitle(catString) || "Uncategorized",
         slug: catString.toLowerCase().replace(/[^a-z0-9]/g, "-"),
       };
     }
