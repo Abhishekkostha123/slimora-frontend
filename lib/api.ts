@@ -70,6 +70,33 @@ export interface PaginatedPosts {
   currentPage: number;
 }
 
+/**
+ * Safely normalizes an unknown value (string or partial object) into a Category.
+ * Avoids unsafe `as Category` casts that fail TS structural checks.
+ */
+function normalizeCategory(cat: unknown): Category {
+  if (cat && typeof cat === "object") {
+    const c = cat as Record<string, unknown>;
+    const name = typeof c.name === "string" ? c.name : String(c.name ?? "");
+    const slug =
+      typeof c.slug === "string" && c.slug
+        ? c.slug
+        : name.toLowerCase().replace(/[^a-z0-9]/g, "-");
+    return {
+      id: c.id ? String(c.id) : c._id ? String(c._id) : undefined,
+      name: name || "Uncategorized",
+      slug: slug || "uncategorized",
+      description: typeof c.description === "string" ? c.description : undefined,
+    };
+  }
+
+  const str = String(cat ?? "");
+  return {
+    name: str.charAt(0).toUpperCase() + str.slice(1),
+    slug: str.toLowerCase().replace(/[^a-z0-9]/g, "-"),
+  };
+}
+
 // Clean and validate the backend URL
 let envBackendUrl = (
   process.env.NEXT_PUBLIC_BACKEND_URL || "https://admin-369manifestation.vercel.app/api"
@@ -133,7 +160,7 @@ export function normalizePost(rawPost: Record<string, unknown>): Post {
   let category: Category | string = "";
   if (rawPost.category) {
     if (typeof rawPost.category === "object") {
-      category = rawPost.category as Category;
+      category = normalizeCategory(rawPost.category);
     } else {
       const catString = String(rawPost.category);
       category = {
@@ -363,25 +390,10 @@ export async function getCategories(): Promise<Category[]> {
           .collection("posts")
           .distinct("category", { status: "published" });
 
-        cats = distinctCats.filter(Boolean).map((c) => {
-          if (typeof c === "object" && c.name && c.slug) return c;
-          const name = String(c);
-          return {
-            name: name.charAt(0).toUpperCase() + name.slice(1),
-            slug: name.toLowerCase().replace(/[^a-z0-9]/g, "-"),
-          };
-        });
+        cats = distinctCats.filter(Boolean).map((c) => normalizeCategory(c));
       }
 
-      return cats.map((cat) => {
-        if (typeof cat === "object") {
-          return cat as Category;
-        }
-        return {
-          name: cat.charAt(0).toUpperCase() + cat.slice(1),
-          slug: cat.toLowerCase().replace(/[^a-z0-9]/g, "-"),
-        };
-      });
+      return cats.map((cat) => normalizeCategory(cat));
     } catch (error) {
       console.error("MongoDB: Error fetching categories:", error);
       return [];
@@ -398,22 +410,14 @@ export async function getCategories(): Promise<Category[]> {
     }
 
     const data = await res.json();
-    let rawCategories: Record<string, unknown>[] = [];
+    let rawCategories: unknown[] = [];
     if (Array.isArray(data)) {
       rawCategories = data;
     } else if (data && Array.isArray(data.categories)) {
       rawCategories = data.categories;
     }
 
-    return rawCategories.map((cat: Record<string, unknown>) => {
-      if (typeof cat === "object") {
-        return cat as Category;
-      }
-      return {
-        name: cat.charAt(0).toUpperCase() + cat.slice(1),
-        slug: cat.toLowerCase().replace(/[^a-z0-9]/g, "-"),
-      };
-    });
+    return rawCategories.map((cat) => normalizeCategory(cat));
   } catch (error) {
     console.error("HTTP: Error fetching categories:", error);
     return [];
@@ -436,35 +440,38 @@ export function authorNameToSlug(name: string): string {
 
 /** Normalize raw MongoDB author document to AuthorFull */
 export function normalizeAuthorFull(raw: Record<string, unknown>): AuthorFull {
-  const name = raw.name || "Unknown Author";
-  const slug =
+  const name = String(raw.name || "Unknown Author");
+  const slug = String(
     raw.slug ||
     raw.authorSlug ||
-    authorNameToSlug(name);
+    authorNameToSlug(name)
+  );
+
+  const social = (raw.socialLinks as Record<string, unknown>) || {};
 
   return {
     id: String(raw._id || raw.id || ""),
     name,
     slug,
-    bio: raw.bio || raw.description || "",
-    image: raw.image || raw.avatar || raw.photo || raw.profileImage || "",
+    bio: String(raw.bio || raw.description || ""),
+    image: String(raw.image || raw.avatar || raw.photo || raw.profileImage || ""),
     expertise: Array.isArray(raw.expertise)
-      ? raw.expertise
+      ? (raw.expertise as string[])
       : Array.isArray(raw.skills)
-      ? raw.skills
+      ? (raw.skills as string[])
       : [],
     socialLinks: {
-      twitter: raw.socialLinks?.twitter || raw.twitter || "",
-      facebook: raw.socialLinks?.facebook || raw.facebook || "",
-      instagram: raw.socialLinks?.instagram || raw.instagram || "",
-      linkedin: raw.socialLinks?.linkedin || raw.linkedin || "",
-      youtube: raw.socialLinks?.youtube || raw.youtube || "",
-      website: raw.socialLinks?.website || raw.website || "",
+      twitter: String(social.twitter || raw.twitter || ""),
+      facebook: String(social.facebook || raw.facebook || ""),
+      instagram: String(social.instagram || raw.instagram || ""),
+      linkedin: String(social.linkedin || raw.linkedin || ""),
+      youtube: String(social.youtube || raw.youtube || ""),
+      website: String(social.website || raw.website || ""),
     },
     createdAt: raw.createdAt
       ? typeof raw.createdAt === "string"
         ? raw.createdAt
-        : new Date(raw.createdAt).toISOString()
+        : new Date(raw.createdAt as string | number | Date).toISOString()
       : new Date().toISOString(),
   };
 }
@@ -492,7 +499,7 @@ export async function getAuthorBySlug(
       if (!raw) {
         const allAuthors = await db.collection("authors").find().toArray();
         raw = allAuthors.find(
-          (a) => authorNameToSlug(a.name || "") === slug
+          (a) => authorNameToSlug(String(a.name || "")) === slug
         ) || null;
       }
 
@@ -520,7 +527,7 @@ export async function getAuthorBySlug(
           const matchedPost = posts.find((p) => {
             const authorName =
               typeof p.author === "object" ? p.author?.name : p.author;
-            return authorName && authorNameToSlug(authorName) === slug;
+            return authorName && authorNameToSlug(String(authorName)) === slug;
           });
 
           if (matchedPost) {
@@ -550,7 +557,7 @@ export async function getAuthorBySlug(
       const postCount = allPosts.filter((p) => {
         const name =
           typeof p.author === "object" ? p.author?.name : p.author;
-        return name && authorNameToSlug(name) === slug;
+        return name && authorNameToSlug(String(name)) === slug;
       }).length;
 
       return { ...normalizeAuthorFull(raw), postCount };
@@ -593,7 +600,7 @@ export async function getAuthorPosts(
       const matching = allPublished.filter((p) => {
         const name =
           typeof p.author === "object" ? p.author?.name : p.author;
-        return name && authorNameToSlug(name) === authorSlug;
+        return name && authorNameToSlug(String(name)) === authorSlug;
       });
 
       const total = matching.length;
@@ -644,21 +651,21 @@ export async function getInitialComments(
 
     return raw.map((c) => ({
       id: String(c._id),
-      author: c.author || "Anonymous",
-      content: c.content || "",
+      author: String(c.author || "Anonymous"),
+      content: String(c.content || ""),
       createdAt:
         c.createdAt instanceof Date
           ? c.createdAt.toISOString()
-          : c.createdAt || new Date().toISOString(),
+          : String(c.createdAt || new Date().toISOString()),
       likes: c.likes ?? 0,
       replies: (c.replies || []).map((r: Record<string, unknown>) => ({
         id: String(r._id || r.id || ""),
-        author: r.author || "Anonymous",
-        content: r.content || "",
+        author: String(r.author || "Anonymous"),
+        content: String(r.content || ""),
         createdAt:
           r.createdAt instanceof Date
             ? r.createdAt.toISOString()
-            : r.createdAt || new Date().toISOString(),
+            : String(r.createdAt || new Date().toISOString()),
       })),
     }));
   } catch (error) {
