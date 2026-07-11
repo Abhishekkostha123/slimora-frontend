@@ -65,6 +65,12 @@ export default async function HomePage() {
   const trendingPosts = posts.slice(0, 6);
   const latestPosts = posts.slice(0, 8);
 
+  // Hero CTA should point to a category that actually exists in the DB.
+  // Falls back to /blog (all posts) if no categories are available yet.
+  const heroCategoryHref = categories[0]
+    ? `/blog?category=${categories[0].slug}`
+    : "/blog";
+
   const websiteSchema = {
     "@context": "https://schema.org",
     "@type": "WebSite",
@@ -127,7 +133,7 @@ export default async function HomePage() {
             </p>
             <div className="mt-7 flex flex-wrap justify-center gap-3">
               <Link
-                href="/blog?category=369-method"
+                href={heroCategoryHref}
                 style={{ backgroundColor: "#8ba178" }}
                 className="px-6 py-2.5 text-white text-sm font-semibold rounded-full hover:opacity-90 transition-opacity shadow-lg shadow-black/30"
               >
@@ -338,7 +344,7 @@ export default async function HomePage() {
                 <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="hover:text-sky-500 transition-colors">
                   <TwitterIcon size={16} />
                 </a>
-                <a href="https://youtube.com" target="_blank" rel="noopener noreferrer" className="hover:text-red-650 transition-colors">
+                <a href="https://youtube.com" target="_blank" rel="noopener noreferrer" className="hover:text-red-600 transition-colors">
                   <YoutubeIcon size={16} />
                 </a>
               </div>

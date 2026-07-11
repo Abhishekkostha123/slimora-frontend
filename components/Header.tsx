@@ -4,17 +4,25 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import SearchInput from "./SearchInput";
+import type { Category } from "@/lib/api";
 
-export default function Header() {
+interface HeaderProps {
+  categories: Category[];
+}
+
+export default function Header({ categories }: HeaderProps) {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
 
+  // Build nav dynamically from real DB categories instead of hardcoded slugs.
+  // Shows up to 3 top categories in the nav bar; falls back gracefully if none exist yet.
   const navigation = [
     { name: "HOME", href: "/" },
     { name: "BLOG", href: "/blog" },
-    { name: "MANIFESTATION", href: "/blog?category=manifestation" },
-    { name: "SPIRITUALITY", href: "/blog?category=spirituality" },
-    { name: "MINDSET", href: "/blog?category=mindset" },
+    ...categories.slice(0, 3).map((cat) => ({
+      name: cat.name.toUpperCase(),
+      href: `/blog?category=${cat.slug}`,
+    })),
     { name: "ABOUT", href: "/about" },
   ];
 
