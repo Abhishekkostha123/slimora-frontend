@@ -117,19 +117,26 @@ const envBackendUrl = (process.env.NEXT_PUBLIC_BACKEND_URL || "").trim().replace
 const BACKEND_URL = envBackendUrl.replace(/\/$/, "");
 const isMongo = BACKEND_URL.startsWith("mongodb://") || BACKEND_URL.startsWith("mongodb+srv://");
 
-console.log("Using backend URL:", JSON.stringify(BACKEND_URL), "Mode:", isMongo ? "MongoDB" : "HTTP");
+console.log("=== API CONFIG ===");
+console.log("ENV VAR NEXT_PUBLIC_BACKEND_URL:", JSON.stringify(process.env.NEXT_PUBLIC_BACKEND_URL));
+console.log("BACKEND_URL (cleaned):", JSON.stringify(BACKEND_URL));
+console.log("Mode:", isMongo ? "MongoDB DIRECT" : "HTTP (no mongo URI found)");
+console.log("==================");
 
 // MongoDB connection caching
 let cachedDb: Db | null = null;
 
 async function getDatabase(): Promise<Db> {
-  if (cachedDb) return cachedDb;
+  if (cachedDb) {
+    console.log("MongoDB: Using cached DB connection");
+    return cachedDb;
+  }
 
   // Extract database name from mongodb URI, e.g. mongodb://127.0.0.1:27017/blog-admin -> blog-admin
-  let dbName = "blog-admin";
+  let dbName = "test";
   try {
     const urlParsed = new URL(BACKEND_URL);
-    dbName = urlParsed.pathname.replace(/^\//, "") || "blog-admin";
+    dbName = urlParsed.pathname.replace(/^\//, "") || "test";
   } catch {
     const match = BACKEND_URL.match(/\/([^/?#]+)(\?|#|$)/);
     if (match) {
@@ -137,9 +144,13 @@ async function getDatabase(): Promise<Db> {
     }
   }
 
+  console.log("MongoDB: Connecting to DB name:", dbName);
+  console.log("MongoDB: URI starts with:", BACKEND_URL.substring(0, 20) + "...");
+
   const client = new MongoClient(BACKEND_URL);
   await client.connect();
   const db = client.db(dbName);
+  console.log("MongoDB: Connected successfully to database:", dbName);
 
   cachedDb = db;
   return db;
