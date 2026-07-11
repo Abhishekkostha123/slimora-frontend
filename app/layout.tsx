@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Cormorant_Garamond } from "next/font/google";
 import "./globals.css";
+import { getCategories } from "@/lib/api";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
@@ -41,15 +42,17 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const categories = await getCategories();
+
   return (
     <html lang="en" className={`${inter.variable} ${cormorant.variable}`}>
       <body className="bg-bg-custom antialiased">
-        <Header />
+        <Header categories={categories} />
         <main>{children}</main>
         <Footer />
       </body>
