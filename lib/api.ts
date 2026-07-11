@@ -380,7 +380,7 @@ export async function getCategories(): Promise<Category[]> {
   if (isMongo) {
     try {
       const db = await getDatabase();
-      let cats: Record<string, unknown>[] = [];
+      let cats: unknown[] = [];
 
       try {
         // Try querying a dedicated 'categories' collection first
@@ -395,7 +395,7 @@ export async function getCategories(): Promise<Category[]> {
           .collection("posts")
           .distinct("category", { status: "published" });
 
-        cats = distinctCats.filter(Boolean).map((c) => normalizeCategory(c));
+        cats = distinctCats.filter(Boolean);
       }
 
       return cats.map((cat) => normalizeCategory(cat));
