@@ -118,17 +118,18 @@ let envBackendUrl = (
   .trim()
   .replace(/\r/g, "");
 
-// Allow http://, https:// and mongodb://
+// Allow http://, https://, mongodb:// and mongodb+srv://
 if (
   !envBackendUrl.startsWith("http://") &&
   !envBackendUrl.startsWith("https://") &&
-  !envBackendUrl.startsWith("mongodb://")
+  !envBackendUrl.startsWith("mongodb://") &&
+  !envBackendUrl.startsWith("mongodb+srv://")
 ) {
   envBackendUrl = "https://admin-369manifestation.vercel.app/api";
 }
 
 const BACKEND_URL = envBackendUrl.replace(/\/$/, "");
-const isMongo = BACKEND_URL.startsWith("mongodb://");
+const isMongo = BACKEND_URL.startsWith("mongodb://") || BACKEND_URL.startsWith("mongodb+srv://");
 
 console.log("Using backend URL:", JSON.stringify(BACKEND_URL), "Mode:", isMongo ? "MongoDB" : "HTTP");
 
