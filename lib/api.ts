@@ -111,22 +111,8 @@ function normalizeCategory(cat: unknown): Category {
   };
 }
 
-// Clean and validate the backend URL
-let envBackendUrl = (
-  process.env.NEXT_PUBLIC_BACKEND_URL || "https://admin-369manifestation.vercel.app/api"
-)
-  .trim()
-  .replace(/\r/g, "");
-
-// Allow http://, https://, mongodb:// and mongodb+srv://
-if (
-  !envBackendUrl.startsWith("http://") &&
-  !envBackendUrl.startsWith("https://") &&
-  !envBackendUrl.startsWith("mongodb://") &&
-  !envBackendUrl.startsWith("mongodb+srv://")
-) {
-  envBackendUrl = "https://admin-369manifestation.vercel.app/api";
-}
+// Clean and validate the backend URL — value comes ONLY from env variable
+const envBackendUrl = (process.env.NEXT_PUBLIC_BACKEND_URL || "").trim().replace(/\r/g, "");
 
 const BACKEND_URL = envBackendUrl.replace(/\/$/, "");
 const isMongo = BACKEND_URL.startsWith("mongodb://") || BACKEND_URL.startsWith("mongodb+srv://");
