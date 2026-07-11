@@ -201,7 +201,12 @@ export function normalizePost(rawPost: Record<string, unknown>): Post {
     coverImageAlt: String(rawPost.coverImageAlt || "Slimora article"),
     category,
     author,
-    faqs: Array.isArray(rawPost.faqs) ? (rawPost.faqs as FAQ[]) : [],
+    faqs: Array.isArray(rawPost.faqs)
+      ? (rawPost.faqs as Record<string, unknown>[]).map((f) => ({
+          question: String(f.question || ""),
+          answer: String(f.answer || ""),
+        }))
+      : [],
     createdAt,
     updatedAt,
     featured: Boolean(rawPost.featured),
